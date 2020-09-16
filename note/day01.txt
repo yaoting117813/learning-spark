@@ -1,0 +1,86 @@
+Apache Spark™ is a unified analytics engine for large-scale data processing.
+
+Spark 第一天
+
+1: 分布式计算程序简介
+
+2: Spark初体验
+
+3: Spark简介
+    Spark-Core
+    Spark-SQL
+    Spark-Streaming
+    Spark-ML
+    Spark-GraphX
+    RDD Resilient Distributed DataSet
+
+4: 安装与配置Spark Standalone集群
+    配置
+        $SPARK_HOME/conf/spark-env.sh
+            export SPARK_MASTER_HOST=node01.hadoop.yaoting117.com
+        $SPARK_HOME/conf/slaves
+            node02.hadoop.yaoting117.com
+            node03.hadoop.yaoting117.com
+    启动
+        在配置的MASTER结点上启动 $SPARK_HOME/sbin/start-all.sh
+    Web UI
+        http://node01.hadoop.yaoting117.com:8080/
+    本地提交任务
+        $SPARK_HOME/bin/spark-shell
+        控制台日志
+            Spark context Web UI available at http://node02.hadoop.yaoting117.com:4040
+            Spark context available as 'sc' (master = local[*], app id = local-1600267782577).
+    向集群提交任务
+        $SPARK_HOME/bin/spark-shell
+            --master spark://node01.hadoop.yaoting117.com:7077
+            --executor-memory 512m
+            --total-executor-cores 2
+        控制台日志 (默认为使用Worker结点所有的物理核心,默认使用1G内存)
+            Spark context Web UI available at http://node02.hadoop.yaoting117.com:4040
+            Spark context available as 'sc' (master = spark://node01.hadoop.yaoting117.com:7077, app id = app-20200916225106-0001).
+5: Spark集群中各个角色的功能
+    Client/Driver   SparkSubmit (客户端进程)
+    Master
+    Worker
+        Executor
+            Task
+    CoarseGrainedExecutorBackend
+
+    Spark Standalone (client模式)     vs    YARN
+    Master                                  ResourceManager
+    Worker                                  NodeManager
+    SparkSubmit(Driver)                     ApplicationMaster
+    Executor                                YarnChild
+
+6: 使用spark-shell
+    启动spark-shell
+        $SPARK_HOME/bin/spark-shell
+                    --master spark://node01.hadoop.yaoting117.com:7077
+                    --executor-memory 512m      # 每一个 executor 使用512m内存
+                    --total-executor-cores 2    # 任务总共使用2个核心(所有Worker一共使用3个核心)
+    流程
+        客户端向master提交任务SparkSubmit,master根据客户端任务信息(executor需要使用的内存,任务需要的总核心数...),在slaves中查找符合条件的Worker,然后Worker会向客户端Driver反向注册
+            Driver将任务发送到Worker的Executor执行
+    简单的任务
+        sc.textFile("hdfs://node01.hadoop.yaoting117.com:9820/input/word.txt")
+            .flatMap(_.split(" ")).map((_, 1))
+            .reduceByKey(_+_).sortBy(_._2, false)
+            .collect
+
+7: 使用IDEA编写Spark的WordCount程序
+    编写代码
+        com.yaoting117.learning.bigdata.sparkcore.day01.WordCount
+    Maven打包
+        maven package
+    在集群上执行程序
+        需要先启动 HDFS 和 Spark集群
+        提交任务
+        $SPARK_HOME/bin/spark-submit
+            --master spark://node01.hadoop.yaoting117.com:7077
+            --executor-memory 512m
+            --total-executor-cores 2
+            --class com.yaoting117.learning.bigdata.sparkcore.day01.WordCount   # 程序主类
+            /home/yaoting117/spark-job/spark-core-1.0-SNAPSHOT.jar              # jar包
+            hdfs://node01.hadoop.yaoting117.com:9820/input/word.txt             # 程序参数
+            hdfs://node01.hadoop.yaoting117.com:9820/output
+
