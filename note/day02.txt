@@ -1,0 +1,6 @@
+Apache Spark™ is a unified analytics engine for large-scale data processing.
+
+Spark 第二天
+
+1: textFile方法创建RDD和分区的数量
+

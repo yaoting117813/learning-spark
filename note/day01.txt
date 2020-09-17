@@ -13,6 +13,8 @@ Spark 第一天
     Spark-ML
     Spark-GraphX
     RDD Resilient Distributed DataSet
+    DAG Directed Acyclic Graph
+
 
 4: 安装与配置Spark Standalone集群
     配置
@@ -83,4 +85,35 @@ Spark 第一天
             /home/yaoting117/spark-job/spark-core-1.0-SNAPSHOT.jar              # jar包
             hdfs://node01.hadoop.yaoting117.com:9820/input/word.txt             # 程序参数
             hdfs://node01.hadoop.yaoting117.com:9820/output
+
+08: 第一天第一课时回顾
+
+09: 使用Java编程实现Spark WordCount程序
+
+10: 使用Java Lambda表达式实现Spark WordCount程序
+
+11: 打包Java版本WordCount部署到集群运行
+
+12: Spark本地运行模式 本地调试
+    new SparkConf().setAppName("WordCount").setMaster("local[*]")
+    System.setProperty("HADOOP_USER_NAME", "yaoting117")
+
+13: RDD简介
+    RDD org.apache.spark.rdd.RDD
+        A Resilient Distributed Dataset (RDD), the basic abstraction in Spark.
+        five main properties:
+            *  - A list of partitions
+            *  - A function for computing each split
+            *  - A list of dependencies on other RDDs
+            *  - Optionally, a Partitioner for key-value RDDs (e.g. to say that the RDD is hash-partitioned)
+            *  - Optionally, a list of preferred locations to compute each split on (e.g. block locations for
+            *    an HDFS file)
+    再说架构:
+        SparkSubmit(Driver)
+            TaskSet (Task, ...)
+        Master
+        Worker
+            Executor
+                Task
+
 

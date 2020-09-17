@@ -1,0 +1,4 @@
+SprakContext.scala
+    2368    -->     def defaultMinPartitions: Int = math.min(defaultParallelism, 2)
+    830     -->     hadoopFile(path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text],
+                        minPartitions).map(pair => pair._2.toString).setName(path)
