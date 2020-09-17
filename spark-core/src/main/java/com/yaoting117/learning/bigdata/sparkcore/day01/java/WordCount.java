@@ -17,11 +17,13 @@ public class WordCount {
 
     public static void main(String[] args) {
 
+        System.setProperty("HADOOP_USER_NAME", "yaoting117");
+
         SparkConf sparkConf = new SparkConf().setMaster("local[*]").setAppName("JavaWordCount");
 
         JavaSparkContext jsc = new JavaSparkContext(sparkConf);
 
-        JavaRDD<String> lines = jsc.textFile("G:\\0916\\big-data\\learning-spark\\input\\word.txt");
+        JavaRDD<String> lines = jsc.textFile("hdfs://dev.yaoting117.com:9820/input2");
 
         JavaRDD<String> words = lines.flatMap(new FlatMapFunction<String, String>() {
             @Override
@@ -73,7 +75,7 @@ public class WordCount {
             }
         });
 
-        System.out.println(sortedSwapedWordCount.collect());
+        sortedWordCount.saveAsTextFile("hdfs://dev.yaoting117.com:9820/output2");
 
         jsc.stop();
 

@@ -1,6 +1,111 @@
 Apache Spark™ is a unified analytics engine for large-scale data processing.
 
 Spark 第二天
+0: RDD续
+    RDD五大特点:
+        *  - A list of partitions
+        *  - A function for computing each split
+        *  - A list of dependencies on other RDDs
+        *  - Optionally, a Partitioner for key-value RDDs (e.g. to say that the RDD is hash-partitioned)
+        *  - Optionally, a list of preferred locations to compute each split on (e.g. block locations for
+        *    an HDFS file)
+    RDD分类:
+        Transformation Lazy
+        Action  Stage TaskSet
 
 1: textFile方法创建RDD和分区的数量
+    使用spark-sell程序
+        $SPARK_HOME/bin/spark-shell
+            --master spark://dev.yaoting117.com:7077
+            --executor-memory 512m
+            --total-executor-cores 2
+        scala> val rdd = sc.textFile("hdfs://dev.yaoting117.com:9820/input/words.txt")      -- 读取HDFS文件系统上的数据
+        rdd: org.apache.spark.rdd.RDD[String] = hdfs://dev.yaoting117.com:9820/input/words.txt MapPartitionsRDD[1] at textFile at <console>:24
+        scala> rdd.partitions.length        -- 分区数,默认最小为2
+        res2: Int = 2
+
+        scala> val rdd = sc.textFile("hdfs://dev.yaoting117.com:9820/input2", 6)
+        rdd: org.apache.spark.rdd.RDD[String] = hdfs://dev.yaoting117.com:9820/input2 MapPartitionsRDD[5] at textFile at <console>:24
+        scala> rdd.partitions.length
+        res4: Int = 7
+
+    (思考: HDFS文件系统上的words.txt是一个文件,Spark默认分区为2,如何读取一个文件)
+        逻辑切片(split) (input2目录中有一个小文件words.txt,一个大文件big-words.txt) 输入切片决定了分区数 (Input split --> partition --> task)
+            20/09/17 22:01:30 INFO HadoopRDD: Input split: hdfs://dev.yaoting117.com:9820/input2/words.txt:0+62
+            20/09/17 22:01:30 INFO HadoopRDD: Input split: hdfs://dev.yaoting117.com:9820/input2/big-words.txt:14547+14486
+            20/09/17 22:01:30 INFO HadoopRDD: Input split: hdfs://dev.yaoting117.com:9820/input2/big-words.txt:0+14547
+
+    sc.textFile(path, numPartitions)
+        原则:使每个分区读取的数据相对均匀
+            默认最小分区为 2
+            逻辑切片(logic split) 输入切片 程序中分区数量等于逻辑切片的数量
+            当在hdfs目录中有两个文件,此两个数据量差不多时(文件大小差不多),逻辑分片数目就是文件的Block数目
+            当在hdfs目录中有两个文件,此两个文件数据量相差较大时,spark内部会自动将大文件切片,使用多个分区,启用多个Task处理较大的文件
+
+2: 并行化读取数据 (做实验使用,将Driver端的Scala集合并行化创建RDD)
+    scala> val rdd1 = sc.parallelize(List(1, 2, 3, 4, 5, 6, 7, 8, 9))
+    rdd1: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[6] at parallelize at <console>:24
+    scala> rdd1.partitions.length
+    res5: Int = 2
+    并行化创建的RDD默认的分区数对于启动spark-shell时指定的核数 (--total-executor-cores)
+
+    sc.parallelize(collection, numPartitions)
+    并行化创建RDD,指定多少分区数,就会有多少分区,就会有多少Task
+
+3: RDD Transformation
+    map
+        scala> sc.parallelize(Array(1, 2, 3, 4, 5))
+        res16: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[13] at parallelize at <console>:26
+        -------------------------------------------------------------------------------------------------
+        scala> res16.map(_ * 2)
+        res17: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[14] at map at <console>:27
+        -------------------------------------------------------------------------------------------------
+        scala> res17.collect
+        res18: Array[Int] = Array(2, 4, 6, 8, 10)
+
+    flatMap
+        scala> val rdd = sc.parallelize(Array("a c yaoting", "qianqian java", "yaoting python"))
+        rdd: org.apache.spark.rdd.RDD[String] = ParallelCollectionRDD[7] at parallelize at <console>:25
+        -------------------------------------------------------------------------------------------------
+        scala> rdd.map(_.split(" "))
+        res7: org.apache.spark.rdd.RDD[Array[String]] = MapPartitionsRDD[8] at map at <console>:27
+        scala> res7.collect
+        res8: Array[Array[String]] = Array(Array(a, c, yaoting), Array(qianqian, java), Array(yaoting, python))
+        -------------------------------------------------------------------------------------------------
+        scala> rdd.flatMap(_.split(" "))
+        res9: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[9] at flatMap at <console>:27
+        scala> res9.collect
+        res10: Array[String] = Array(a, c, yaoting, qianqian, java, yaoting, python)
+        -------------------------------------------------------------------------------------------------
+        scala> sc.parallelize(List(List("java python c++", "c scala javascript"), List("vue react angular", "spring-boot spring-cloud")))
+        res11: org.apache.spark.rdd.RDD[List[String]] = ParallelCollectionRDD[10] at parallelize at <console>:26
+        -------------------------------------------------------------------------------------------------
+        scala> res11.flatMap(_.flatMap(_.split(" ")))           -- 外层的flatMap时RDD中的方法,内层的flatMap时Scala List的方法
+        res12: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[11] at flatMap at <console>:27
+        -------------------------------------------------------------------------------------------------
+        scala> res12.collect
+        res13: Array[String] = Array(java, python, c++, c, scala, javascript, vue, react, angular, spring-boot, spring-cloud)
+    filter
+        scala> res12.filter(_.contains("java"))
+        res14: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[12] at filter at <console>:27
+        -------------------------------------------------------------------------------------------------
+        scala> res14.collect
+        res15: Array[String] = Array(java, javascript)
+    mapPartitions
+    mapPartitionsWithIndex
+    sortBy
+    sortByKey
+    groupBy
+        def groupBy[K](f: T => K)(implicit kt: ClassTag[K]): RDD[(K, Iterable[T])]
+    groupByKey
+        def groupByKey(): RDD[(K, Iterable[V])]
+    reduceByKey
+    distinct
+
+
+4: RDD Action
+    collect         将Executor中的Task运行的结果收集到Driver的一个数组中
+    saveAsText      由Executor中的Task直接将结果写入HDFS文件系统
+
+
 
