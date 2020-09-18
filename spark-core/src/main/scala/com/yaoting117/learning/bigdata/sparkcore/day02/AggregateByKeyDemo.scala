@@ -3,6 +3,10 @@ package com.yaoting117.learning.bigdata.sparkcore.day02
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
+/**
+ *  Spark aggregateByKey function aggregates the values of each key,
+ *    using given combine functions and a neutral “zero value”
+ */
 object AggregateByKeyDemo {
 
   def main(args: Array[String]): Unit = {

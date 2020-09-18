@@ -120,6 +120,7 @@ Spark 第二天
         def cogroup[W](other: RDD[(K, W)]): RDD[(K, (Iterable[V], Iterable[W]))]
     groupWith
     aggregateByKey
+        Spark aggregateByKey function aggregates the values of each key, using given combine functions and a neutral “zero value”
         def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U, combOp: (U, U) => U): RDD[(K, U)]
         初始值
         分区内聚合函数
@@ -131,6 +132,8 @@ Spark 第二天
             mergeValue: (C, V) => C,
             mergeCombiners: (C, C) => C
         ): RDD[(K, C)]
+
+
 
 
 
