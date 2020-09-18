@@ -94,13 +94,45 @@ Spark 第二天
     mapPartitions
     mapPartitionsWithIndex
     sortBy
+        def sortBy[K](f: (T) => K, ascending: Boolean = true, numPartitions: Int = this.partitions.length)
+              (implicit ord: Ordering[K], ctag: ClassTag[K]): RDD[T]
     sortByKey
+        def sortByKey(ascending: Boolean = true, numPartitions: Int = self.partitions.length) : RDD[(K, V)]
     groupBy
         def groupBy[K](f: T => K)(implicit kt: ClassTag[K]): RDD[(K, Iterable[T])]
     groupByKey
         def groupByKey(): RDD[(K, Iterable[V])]
     reduceByKey
+        def reduceByKey(func: (V, V) => V): RDD[(K, V)]
     distinct
+        def distinct(): RDD[T]
+        底层使用 reduceByKey 实现
+             map(x => (x, null)).reduceByKey((x, y) => x, numPartitions).map(_._1)
+    union
+    intersection
+    subtract
+    join
+    leftOuterJoin
+    rightOuterJoin
+    fullOuterJoin
+    cartesian
+    cogroup
+        def cogroup[W](other: RDD[(K, W)]): RDD[(K, (Iterable[V], Iterable[W]))]
+    groupWith
+    aggregateByKey
+        def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U, combOp: (U, U) => U): RDD[(K, U)]
+        初始值
+        分区内聚合函数
+        分区间聚合函数
+    foldByKey
+    combineByKey
+        def combineByKey[C](
+            createCombiner: V => C,
+            mergeValue: (C, V) => C,
+            mergeCombiners: (C, C) => C
+        ): RDD[(K, C)]
+
+
 
 
 4: RDD Action

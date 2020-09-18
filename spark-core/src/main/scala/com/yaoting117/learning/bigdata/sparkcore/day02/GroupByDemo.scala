@@ -23,6 +23,7 @@ object GroupByDemo {
       ("yaoting117", 37), ("yaoting117", "沙市"), ("qianqian813", 26), ("qianqian813", "武汉"), ("qianqian813", "北京"))
     )
 
+
     // ShuffledRDD
     val result: RDD[(String, Iterable[(String, Any)])] = input.groupBy(_._1)
 
